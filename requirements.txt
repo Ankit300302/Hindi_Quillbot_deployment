@@ -7,3 +7,5 @@ sentence-transformers
 huggingface_hub
 deep-translator
 tiktoken
+blobfile
+
