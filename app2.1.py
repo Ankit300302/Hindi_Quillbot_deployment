@@ -1,6 +1,6 @@
 import streamlit as st
 from huggingface_hub import login
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
@@ -10,7 +10,7 @@ import numpy as np
 st.set_page_config(page_title="Hindi Text Processing", layout="wide")
 
 # Initialize Translator
-translator = Translator()
+#translator = Translator()
 
 # Cache heavy models
 @st.cache_resource
@@ -35,12 +35,12 @@ paraphrase_tokenizer, paraphrase_model = load_paraphrase_model()
 gc_tokenizer, gc_model = load_grammar_model()
 sentence_model = load_sentence_model()
 
-def safe_translate(text, src, dest):
+def safe_translate(text):
     try:
-        return translator.translate(text, src=src, dest=dest).text
+        return GoogleTranslator(source='auto', target='en').translate(text)
     except Exception as e:
-        st.error(f"Translation failed: {e}")
-        return ""
+        return "Translation Error"
+
 
 def translate_to_english(text):
     return safe_translate(text, 'hi', 'en')
