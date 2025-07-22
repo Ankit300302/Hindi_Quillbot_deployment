@@ -15,7 +15,7 @@ st.set_page_config(page_title="Hindi Text Processing", layout="wide")
 # Cache heavy models
 @st.cache_resource
 def load_paraphrase_model():
-    model_name = "Vamsi/T5_Paraphrase_Paws"
+    model_name = "ramsrigouthamg/t5_paraphraser"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     return tokenizer, model
