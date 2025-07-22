@@ -1,11 +1,12 @@
-streamlit
-transformers
-torch
-googletrans==4.0.0rc1
-scikit-learn
-sentence-transformers
-huggingface_hub
-deep-translator
+streamlit>=1.30.0
+transformers>=4.41.1
+sentencepiece>=0.1.99
+sentence-transformers>=2.7.0
+deep-translator>=1.11.4
+scikit-learn>=1.5.0
+torch>=2.2.2
+huggingface-hub>=0.22.2
+numpy>=1.26.4
 tiktoken
 blobfile
 

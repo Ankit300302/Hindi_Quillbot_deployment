@@ -9,14 +9,11 @@ import numpy as np
 # Page configuration
 st.set_page_config(page_title="Hindi Text Processing", layout="wide")
 
-# Initialize Translator
-#translator = Translator()
-
 # Cache heavy models
 @st.cache_resource
 def load_paraphrase_model():
     model_name = "Vamsi/T5_Paraphrase_Paws"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     return tokenizer, model
 
@@ -31,23 +28,25 @@ def load_grammar_model():
 def load_sentence_model():
     return SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
+# Load all models once
 paraphrase_tokenizer, paraphrase_model = load_paraphrase_model()
 gc_tokenizer, gc_model = load_grammar_model()
 sentence_model = load_sentence_model()
 
-def safe_translate(text):
+# Translation helpers
+def safe_translate(text, source='auto', target='en'):
     try:
-        return GoogleTranslator(source='auto', target='en').translate(text)
-    except Exception as e:
+        return GoogleTranslator(source=source, target=target).translate(text)
+    except Exception:
         return "Translation Error"
 
-
 def translate_to_english(text):
-    return safe_translate(text, 'hi', 'en')
+    return safe_translate(text, source='hi', target='en')
 
 def translate_to_hindi(text):
-    return safe_translate(text, 'en', 'hi')
+    return safe_translate(text, source='en', target='hi')
 
+# Core processing functions
 def paraphrase(text):
     inputs = paraphrase_tokenizer.encode("paraphrase: " + text, return_tensors="pt", max_length=512, truncation=True)
     outputs = paraphrase_model.generate(inputs, max_length=512, num_beams=5, early_stopping=True)
@@ -80,7 +79,7 @@ def ngram_similarity(text1, text2, n):
     set2 = get_ngrams(text2, n)
     return len(set1 & set2) / max(1, len(set1 | set2))
 
-# UI
+# Streamlit UI
 st.title("📝 Hindi Text Processing Application")
 st.markdown("""
 Enter a Hindi paragraph to translate, paraphrase, correct grammar, and evaluate its similarity to the original.
