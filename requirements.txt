@@ -1,0 +1,7 @@
+streamlit
+transformers
+torch
+googletrans==4.0.0rc1
+scikit-learn
+sentence-transformers
+huggingface_hub
