@@ -6,32 +6,78 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TRANSFORMERS_OFFLOAD"] = "1"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
+def check_environment():
+    """Verify all required packages are installed"""
+    required = ['tiktoken', 'sentencepiece', 'protobuf']
+    missing = [pkg for pkg in required if not is_installed(pkg)]
+    if missing:
+        st.error(f"Missing packages: {', '.join(missing)}")
+        st.stop()
+
+def is_installed(package_name):
+    try:
+        __import__(package_name)
+        return True
+    except ImportError:
+        return False
+
+# At the beginning of your script
+check_environment()
+
 # Page configuration
 st.set_page_config(page_title="Hindi Text Processing", layout="wide")
 
-# Cache heavy models
-@st.cache_resource
+@st.cache_resource(ttl=24*3600, show_spinner=False)
 def load_paraphrase_model():
-    model_name = "Vamsi/T5_Paraphrase_Paws"
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    return tokenizer, model
+    try:
+        model_name = "humarin/chatgpt_paraphraser_on_T5_base"  # Smaller alternative
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            use_fast=True,  # Must use fast tokenizer
+            legacy=False
+        )
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            model_name,
+            low_cpu_mem_usage=True
+        )
+        return tokenizer, model
+    except Exception as e:
+        st.error(f"Failed to load paraphrase model: {str(e)}")
+        return None, None
 
-@st.cache_resource
+@st.cache_resource(ttl=24*3600)
 def load_grammar_model():
-    model_name = "prithivida/grammar_error_correcter_v1"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    return tokenizer, model
+    try:
+        model_name = "vennify/t5-base-grammar-correction"  # Smaller alternative
+        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        return tokenizer, model
+    except Exception as e:
+        st.error(f"Failed to load grammar model: {str(e)}")
+        return None, None
 
-@st.cache_resource
+@st.cache_resource(ttl=24*3600)
 def load_sentence_model():
-    return SentenceTransformer('paraphrase-MiniLM-L6-v2')
+    try:
+        return SentenceTransformer('all-MiniLM-L6-v2', device='cpu')  # Smaller model
+    except Exception as e:
+        st.error(f"Failed to load sentence model: {str(e)}")
+        return None
 
 # Load all models once
 paraphrase_tokenizer, paraphrase_model = load_paraphrase_model()
 gc_tokenizer, gc_model = load_grammar_model()
 sentence_model = load_sentence_model()
+
+# After loading all models
+if None in [paraphrase_tokenizer, paraphrase_model, gc_tokenizer, gc_model, sentence_model]:
+    st.error("Critical models failed to load. Please check the logs.")
+    st.stop()
 
 # Translation helpers
 def safe_translate(text, source='auto', target='en'):
